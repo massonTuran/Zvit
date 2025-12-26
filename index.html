@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Форма застосування</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-the-mask@0.11.1/dist/vue-the-mask.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body { background-color: #0e0e0e; color: #eaeaea; font-family: system-ui, sans-serif; }
+    select, input, textarea { color: white !important; }
+    
+    /* Фіксовані стрічки */
+    .top-strip { position: fixed; top: 0; left: 0; right: 0; height: 6px; background-color: #1e5eff; z-index: 50; }
+    .bottom-strip { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background-color: #f2c300; z-index: 50; }
+
+    .time-btn {
+      background: #454353;
+      color: white !important;
+      padding: 0 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      border: 1px solid #555;
+    }
+    .time-btn:active { transform: scale(0.95); background: #5a586e; }
+    .author-tag {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 11px;
+      opacity: 0.4;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .last-sent {
+      text-align: center;
+      font-size: 10px;
+      color: #f2c300;
+      margin-top: 5px;
+      opacity: 0.8;
+    }
+    /* Відступ для контенту, щоб стрічки не заважали */
+    .content-wrapper { padding-top: 10px; padding-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div id="app" class="min-h-screen flex flex-col">
+  <div class="top-strip"></div>
+  <div class="bottom-strip"></div>
+
+  <div class="flex-1 flex items-center justify-center p-5 content-wrapper">
+    <div class="w-full max-w-[480px] bg-[#181818] p-6 rounded-xl shadow-2xl my-4">
+      <form @submit.prevent>
+        
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70">Підрозділ:</label>
+          <select v-model="formData.pidrozdil" class="w-full p-2 rounded bg-[#454353]">
+            <option value="">— оберіть зі списку —</option>
+            <option v-for="unit in units" :key="unit" :value="unit">{{ unit }}</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70">Позивний:</label>
+          <div class="flex gap-2">
+            <select v-model="formData.pozivniyPrefix" class="w-1/3 p-2 rounded bg-[#454353]">
+              <option v-for="p in prefixes" :key="p" :value="p">{{ p }}</option>
+            </select>
+            <input v-model="formData.pozivniy" type="text" placeholder="Впишіть" class="w-2/3 p-2 rounded bg-[#454353]">
+          </div>
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70">Область:</label>
+          <select v-model="formData.oblast" class="w-full p-2 rounded bg-[#454353]">
+            <option value="">— оберіть область —</option>
+            <option v-for="reg in regions" :key="reg" :value="reg">{{ reg }}</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70">Н.П.:</label>
+          <input v-model="formData.naseleniyPunkt" type="text" placeholder="Введіть Н.П." class="w-full p-2 rounded bg-[#454353]">
+        </div>
+
+        <div class="flex gap-4 mb-4">
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70">Дата:</label>
+            <input v-model="formData.date" type="date" class="p-2 rounded bg-[#454353]">
+          </div>
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70">Час:</label>
+            <div class="flex gap-1">
+              <button type="button" @click="adjustTime(-1)" class="time-btn">-1</button>
+              <input v-model="formData.time" type="time" class="p-2 rounded bg-[#454353] w-full text-center">
+              <button type="button" @click="adjustTime(1)" class="time-btn">+1</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70">Зброя:</label>
+          <div v-for="(w, index) in formData.weapons" :key="'w'+index" class="flex gap-2 mb-2">
+            <select v-model="w.name" class="w-full p-2 rounded bg-[#454353]">
+              <option value="" disabled>Оберіть зброю</option>
+              <option v-for="weapon in weapons" :key="weapon" :value="weapon">{{ weapon }}</option>
+            </select>
+            <button v-if="formData.weapons.length > 1" @click="removeWeapon(index)" class="bg-red-700 px-3 rounded text-white">✖</button>
+          </div>
+          <button type="button" @click="addWeapon" class="bg-blue-800 text-white px-3 py-1.5 rounded self-start text-xs">+ Додати зброю</button>
+        </div>
+
+        <div class="flex gap-4 mb-4">
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70">№ цілі:</label>
+            <input v-model="formData.targetNumber" type="text" placeholder="0000" class="p-2 rounded bg-[#454353]">
+          </div>
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70">Висота:</label>
+            <input v-model="formData.height" type="text" placeholder="0000" class="p-2 rounded bg-[#454353]">
+          </div>
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70">Результат:</label>
+          <select v-model="formData.result" class="w-full p-2 rounded bg-[#454353]">
+            <option v-for="res in results" :key="res" :value="res">{{ res }}</option>
+          </select>
+        </div>
+
+        <div class="mb-4" v-if="showRozxid">
+          <label class="mb-1 block text-sm opacity-70">Розхід:</label>
+          <div v-for="(item, index) in formData.rozxid" :key="'r'+index" class="bg-[#2a2a2a] p-3 rounded-lg mb-2">
+            <select v-model="item.type" class="w-full p-2 rounded bg-[#454353] mb-2">
+              <option value="" disabled>Оберіть тип боєприпасу</option>
+              <option v-for="ammo in ammoTypes" :key="ammo" :value="ammo">{{ ammo }}</option>
+            </select>
+            <div class="flex gap-2">
+              <input v-model="item.quantity" type="text" placeholder="Кількість" class="w-full p-2 rounded bg-[#454353]">
+              <button type="button" @click="removeRozxid(index)" class="bg-red-700 px-3 rounded text-white">Видалити</button>
+            </div>
+          </div>
+          <button type="button" @click="addRozxid" class="bg-blue-800 text-white px-3 py-1.5 rounded text-xs">+ Додати розхід</button>
+        </div>
+
+        <div class="my-4">
+          <label class="mb-1 block text-sm opacity-70">Опис:</label>
+          <div class="grid grid-cols-3 gap-2 mb-2">
+            <div class="flex items-center gap-1"><span>А-</span><input v-model="formData.angle" placeholder="360" class="w-full p-2 rounded bg-[#454353]"></div>
+            <div class="flex items-center gap-1"><span>Д-</span><input v-model="formData.distance" placeholder="0000" class="w-full p-2 rounded bg-[#454353]"></div>
+            <div class="flex items-center gap-1"><span>К-</span><input v-model="formData.krok" placeholder="360" class="w-full p-2 rounded bg-[#454353]"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <select v-model="formData.action" class="p-2 rounded bg-[#454353]">
+              <option value="" disabled>Дія</option>
+              <option v-for="act in actions" :key="act" :value="act">{{ act }}</option>
+            </select>
+            <select v-model="formData.targetCount" class="p-2 rounded bg-[#454353]">
+              <option value="" disabled>К-сть</option>
+              <option v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" :value="n">{{ n }}</option>
+            </select>
+            <select v-model="formData.targetClass" class="p-2 rounded bg-[#454353]">
+              <option value="" disabled>Клас</option>
+              <option v-for="cls in classes" :key="cls" :value="cls">{{ cls }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="mb-1 text-sm opacity-70">Коментар:</label>
+          <textarea v-model="formData.comment" rows="2" placeholder="Додаткові відомості..." class="w-full p-2 rounded bg-[#454353]"></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label class="mb-1 block text-sm opacity-70">Особовий склад:</label>
+          <div v-for="(p, index) in formData.personnel" :key="'p'+index" class="bg-[#2a2a2a] p-3 rounded-lg mb-2 flex flex-col gap-2">
+            <select v-model="p.rank" class="w-full p-2 rounded bg-[#454353]">
+              <option v-for="rank in ranks" :key="rank" :value="rank">{{ rank }}</option>
+            </select>
+            <div class="flex gap-2">
+              <input v-model="p.pib" placeholder="Прізвище І.О." class="w-full p-2 rounded bg-[#454353]">
+              <button type="button" @click="removePersonnel(index)" class="bg-red-700 px-3 rounded text-white">✖</button>
+            </div>
+          </div>
+          <button type="button" @click="addPersonnel" class="bg-blue-800 text-white px-3 py-1.5 rounded text-xs">+ Додати особу</button>
+        </div>
+
+        <button @click="copyData" class="w-full bg-green-700 py-4 rounded-xl font-bold uppercase mb-3 hover:bg-green-800 transition">Скопіювати</button>
+        
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <button @click="sendTo('Signal')" class="bg-[#2052ce] text-white py-3 rounded-lg font-bold text-sm">Signal</button>
+          <button @click="sendTo('WhatsApp')" class="bg-[#25D366] text-white py-3 rounded-lg font-bold text-sm">WhatsApp</button>
+        </div>
+
+        <button @click="clearForm" class="w-full border border-gray-600 py-2 rounded-xl text-xs opacity-60 hover:bg-gray-800 transition">Очистити все</button>
+        
+        <div v-if="lastSent" class="last-sent">Надіслано до: {{ lastSent }}</div>
+        <div class="author-tag">© Туран</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  Vue.use(VueTheMask);
+  new Vue({
+    el: '#app',
+    data: {
+      lastSent: localStorage.getItem('lastSentApp') || '',
+      formData: {
+        pidrozdil: '', pozivniyPrefix: 'МВГ', pozivniy: '', naseleniyPunkt: '', oblast: '',
+        date: '', time: '', weapons: [{ name: '' }], targetNumber: '', height: '', result: 'не застосовувалась',
+        angle: '', distance: '', krok: '', action: '', targetCount: '', targetClass: '',
+        rozxid: [{ type: '', quantity: '' }], personnel: [{ rank: 'солд.', pib: '' }], comment: ''
+      },
+      units: ['ПвК Центр', '138 ртбр', '96 зрбр', '14 зрбр', '156 зрп', '39 брта', '40 брта', '831 брта', '31 опз та ртз', '110 ак', '21 ак', '121 ак', '1163 бо', '1129 зрп', '39 зрп', '223 зрп', '225 зрп', '201 зрбр', '302 зрбр', '540 зрбр', '164 ртбр', '114 брта', '1 брОП НГУ', '2 обр НГУ', '4 бр НГУ', '16 оабр НГУ', '19 об НГУ', '21 обр НГУ', '22 обр НГУ', '27 обр НГУ', '28 п НГУ', '31 п НГУ', '36 п НГУ', '37 п НГУ', '38 п НГУ', '40 п НГУ', '45 п НГУ', 'ОПБр', '125 овмбр', '172 брез', '178 брез', '72 омбр', '13 озкб', '630 озкб', '631 озкб', '635 озкб', '637 озкб', '638 озкб', '642 озкб', '643 озкб', '644 озкб', '645 озкб', '646 озкб', '650 озкб', '1020 зрап', '1025 зрап', '1027 зрап', '1121 зрап', '1021 зап', '1 обр ТРО', '102 обр ТРО', '103 обр ТРО', '104 обр ТРО', '105 обр ТРО', '106 обр ТРО', '112 обр ТРО', '114 обр ТРО', '115 обр ТРО', '116 обр ТРО', '117 обр ТРО', '118 обр ТРО', '119 обр ТРО', '120 обр ТРО', '121 обр ТРО', '127 обр ТРО', '168 обр ТРО', '105 ПрикЗ', '3 ПрикЗ', '9 ПрикЗ', 'ДФТГ', 'ДПСУ', 'НГУ', 'НПУ', 'ГУР'],
+      prefixes: ['МВГ', 'ВГ'],
+      regions: ['Вінницька', 'Житомирська', 'Кіровоградська', 'Київська', 'Одеська', 'Полтавська', 'Сумська', 'Черкаська', 'Чернігівська'],
+      weapons: ['зі стрілецької зброї 5.45/5.56', 'зі стрілецької зброї 7.62', 'із ВКК Browning M2 12.7', 'із ВКК Canik M2 12.7', 'із НСВ Утьос 12.7', 'із ВКК ДШК 12.7', 'із ВКК КПВТ 14.5', 'із ЗКУ Viktor MR-2 14.5', 'із АЗГ М-75 20мм.', 'із ЗУ М-55 20мм', 'із ЗУ 23-2 23мм', 'із ЗУ 23-4 Рокач (Шилка) 23мм', 'із ЗУ VZ-53/59 Praga 30мм', 'із АЗГ L-70 Bofors 40мм.', 'із АЗГ С-60 57мм', 'із ЗСАУ Cheetah 35мм', 'із ЗСУ 1А2 Gepard 35мм', 'із ЗСАУ 2С6 Тунгуска', 'із ПЗРК RBS-70', 'із ПЗРК Ігла (Ігла - 1)', 'із ПЗРК Stinger', 'із ПЗРК FN-6', 'із ПЗРК Piorun', 'із ПЗРК Стріла-3', 'із МОПУ Джигіт', 'із ЗРК STASH', 'із ЗРК DASH', 'із ЗРК Raven', 'із ЗРК Avanger', 'із ЗРК Оса АКМ', 'із ЗРК CA-95', 'із ЗРК ITEL-1,5'],
+      ammoTypes: ['Розхід ЗКР', 'Розхід НБЖ', 'Снаряд 57х348 мм (АЗГ С-60)', 'Снаряд 40х365 мм (L-70 Bofors)', 'Снаряд 35х228 мм (Gepard)', 'Снаряд 30х210 мм (VZ-53/59 Praga)', 'Набій 23х152 мм (ЗУ-23-4) АРІ', 'Набій 23х152 мм (ЗУ-23-2) ОФЗ', 'Набій 23х152 мм (ЗУ-23-2) БЗТ', 'Набій 23х152 мм (ЗУ-23-2) ОФЗТ', 'Набій 20х110 мм (АЗГ М-75, M55) БЗТ', 'Набій 20х110 мм (АЗГ М-75, M55) ТЗ', 'Набій 20х110 мм (АЗГ М-75, M55) ТЗО', 'Набій 14,5х114 мм (ЗПУ, КПВТ) Б-32', 'Набій 14,5х114 мм (ЗПУ, КПВТ) БЗТ', 'Набій 14,5х114 мм (ЗПУ, КПВТ) МДЗ', 'Набій 12,7х108 мм (ДШК, НСВ, Корд, W85) МДЗ', 'Набій 12,7х108 мм (ДШК, НСВ, Корд, W85) БЗТ', 'Набій 12,7х108 мм (ДШК, НСВ, Корд, W85) Б-32', 'Набій 12,7х108 мм (ДШК, НСВ, Корд, W85) 1СЛ', 'Набій 12,7х108 мм FMJ', 'Набій 12,7х99 мм (Canik, Browning)', 'Набій 7,62х54 мм (ПКМ, КМ-7,62, СВД) ЛПС', 'Набій 7,62х54 мм (ПКМ, КМ-7,62, СВД) Т-46', 'Набій 7,62х54 мм (ПКМ, КМ-7,62, СВД) Б-32', 'Набій 7,62х54 мм FMJ', 'Набій 7,62х51 мм (CZ TSR, MG3, MG42, FN MAG) М-80, М-62', 'Набій 7,62х39 мм (РКК, РКД, АКМ) ПС', 'Набій 7,62х39 мм (РКК, РКД, АКМ) Т-45', 'Набій 5,56х45 мм (FNC) SS109', 'Набій 5,45х39 мм ПС', 'Набій 5,45х39 мм Т'],
+      results: ['не застосовувалась', 'не знищено', 'ЗНИЩЕНО', 'вибух'],
+      actions: ['обстріляно', 'знищено', 'Акустично', 'Візуально'],
+      classes: ['БПЛА', 'КР', 'Гелікоптер', 'Літак малий'],
+      ranks: ['солд.', 'ст. солд.', 'мол. с-нт', 'с-нт', 'ст. с-нт', 'гол. с-нт', 'шт. с-нт', 'м. с-нт', 'мол. л-т', 'л-т', 'ст. л-т', 'к-н', 'м-р', 'п.п-к', 'п-к']
+    },
+    computed: {
+      showRozxid() { return this.formData.result !== 'не застосовувалась' && this.formData.result !== 'вибух'; }
+    },
+    methods: {
+      updateDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        this.formData.date = `${year}-${month}-${day}`;
+        this.formData.time = now.toTimeString().slice(0, 5);
+      },
+      adjustTime(mins) {
+        let [h, m] = this.formData.time.split(':').map(Number);
+        const d = new Date();
+        d.setHours(h, m + mins);
+        this.formData.time = d.toTimeString().slice(0, 5);
+      },
+      addWeapon() { this.formData.weapons.push({ name: '' }); },
+      removeWeapon(i) { if(this.formData.weapons.length > 1) this.formData.weapons.splice(i, 1); },
+      addRozxid() { this.formData.rozxid.push({ type: '', quantity: '' }); },
+      removeRozxid(i) { this.formData.rozxid.splice(i, 1); },
+      addPersonnel() { this.formData.personnel.push({ rank: 'солд.', pib: '' }); },
+      removePersonnel(i) { this.formData.personnel.splice(i, 1); },
+      clearForm() { if(confirm("Очистити абсолютно все?")) { localStorage.removeItem('milFormVFinal_Turan'); location.reload(); } },
+      
+      generateText() {
+        const f = this.formData;
+        const wLine = f.weapons.map(w => w.name).filter(Boolean).join(', ');
+        const pLine = f.personnel.filter(p => p.pib).map(p => `${p.rank} ${p.pib}`).join(', ');
+        let text = `Дата: ${f.date.split('-').reverse().join('.')}\nЧас: ${f.time}\n№ цілі: ${f.targetNumber || 'б/н'}\nРезультат: ${f.result}\nН.П.: ${f.naseleniyPunkt}\nОбл.: ${f.oblast}\nПідрозділ: ${f.pidrozdil}\nПозивний: ${f.pozivniyPrefix} ${f.pozivniy}\nЗброя: ${wLine}\nВисота: ${f.height}\nОпис: А-${f.angle || '0'}, Д-${f.distance || '0'}, К-${f.krok || '0'}`;
+        if (f.action || f.targetCount || f.targetClass) {
+           text += `, ${f.action || ''} ${f.targetCount || ''} ${f.targetClass || ''}`.replace(/\s+/g, ' ').trim();
+        }
+        if(pLine) text += `\nСклад: ${pLine}`;
+        if(f.comment) text += `\nКоментар: ${f.comment}`;
+        if(this.showRozxid) { f.rozxid.forEach(i => { if(i.type && i.quantity) text += `\n${i.type} - ${i.quantity}`; }); }
+        return text;
+      },
+
+      copyData() {
+        const text = this.generateText();
+        navigator.clipboard.writeText(text).then(() => alert("Скопійовано!"));
+      },
+
+      sendTo(app) {
+        const text = this.generateText();
+        this.lastSent = app;
+        localStorage.setItem('lastSentApp', app);
+        
+        navigator.clipboard.writeText(text).then(() => {
+          if (app === 'WhatsApp') {
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+          } else if (app === 'Signal') {
+            alert("Текст скопійовано! Відкриваємо Signal.");
+            window.open('sgnl://', '_blank');
+          }
+        });
+      }
+    },
+    created() {
+      const saved = localStorage.getItem('milFormVFinal_Turan');
+      if (saved) { 
+        this.formData = Object.assign(this.formData, JSON.parse(saved)); 
+      }
+      
+      this.formData.targetNumber = ''; 
+      this.formData.height = ''; 
+      this.formData.angle = '';
+      this.formData.distance = ''; 
+      this.formData.krok = ''; 
+      this.formData.action = '';
+      this.formData.targetCount = ''; 
+      this.formData.targetClass = ''; 
+      this.formData.comment = '';
+      this.formData.rozxid = [{ type: '', quantity: '' }]; 
+      this.formData.result = 'не застосовувалась';
+
+      this.updateDateTime();
+    },
+    watch: {
+      formData: { handler(val) { localStorage.setItem('milFormVFinal_Turan', JSON.stringify(val)); }, deep: true }
+    }
+  });
+</script>
+</body>
+</html>
