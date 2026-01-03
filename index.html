@@ -6,18 +6,66 @@
   <title>Форма звітності — Туран</title>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-the-mask@0.11.1/dist/vue-the-mask.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
     body { background-color: #0e0e0e; color: #eaeaea; font-family: system-ui, sans-serif; overflow-x: hidden; }
     select, input, textarea { color: white !important; font-size: 16px !important; } 
+    
     .top-strip { position: fixed; top: 0; left: 0; right: 0; height: 6px; background-color: #1e5eff; z-index: 100; }
     .bottom-strip { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background-color: #f2c300; z-index: 100; }
-    .custom-input { background-color: #454353 !important; border: 1px solid #333 !important; border-radius: 0.5rem !important; padding: 0.6rem !important; }
-    .time-btn { background: #454353; color: white !important; padding: 0 12px; border-radius: 8px; font-weight: bold; border: 1px solid #555; height: 40px; }
-    .author-tag { text-align: center; margin-top: 12px; font-size: 11px; opacity: 0.4; letter-spacing: 1px; text-transform: uppercase; padding-bottom: 25px; }
-    .form-card { width: 98%; max-width: 500px; background-color: #181818; padding: 1.25rem; border-radius: 0.75rem; margin: 20px auto; }
-    .btn-messenger { display: flex; align-items: center; justify-content: center; height: 50px; border-radius: 12px; font-weight: bold; text-transform: uppercase; font-size: 14px; color: white; text-decoration: none; }
+
+    .custom-input {
+      background-color: #454353 !important;
+      border: 1px solid #333 !important;
+      border-radius: 0.5rem !important;
+      padding: 0.6rem !important;
+    }
+
+    .time-btn {
+      background: #454353;
+      color: white !important;
+      padding: 0 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      border: 1px solid #555;
+      height: 42px;
+    }
+    
+    .author-tag {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 11px;
+      opacity: 0.4;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding-bottom: 30px;
+    }
+    
+    .content-wrapper { width: 100%; display: flex; justify-content: center; padding: 15px 0; }
+
+    .form-card {
+      width: 98%;
+      max-width: 500px;
+      background-color: #181818;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-messenger {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 50px;
+      border-radius: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: white !important;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -26,90 +74,184 @@
   <div class="top-strip"></div>
   <div class="bottom-strip"></div>
 
-  <div class="form-card shadow-2xl">
-    <form @submit.prevent>
-      
-      <div class="mb-4">
-        <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Підрозділ:</label>
-        <select v-model="formData.pidrozdil" class="custom-input w-full">
-          <option v-for="unit in units" :key="unit" :value="unit">{{ unit }}</option>
-        </select>
-      </div>
-
-      <div class="mb-4">
-        <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Позивний:</label>
-        <div class="flex gap-2">
-          <select v-model="formData.pozivniyPrefix" class="w-1/3 custom-input">
-            <option v-for="p in prefixes" :key="p" :value="p">{{ p }}</option>
-          </select>
-          <input v-model="formData.pozivniy" type="text" placeholder="Впишіть" class="w-2/3 custom-input">
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-2 mb-4">
-        <input v-model="formData.date" type="date" class="custom-input w-full">
-        <div class="flex gap-1">
-          <button type="button" @click="adjustTime(-1)" class="time-btn">-</button>
-          <input v-model="formData.time" type="time" class="custom-input w-full text-center">
-          <button type="button" @click="adjustTime(1)" class="time-btn">+</button>
-        </div>
-      </div>
-
-      <div class="mb-4">
-        <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Результат:</label>
-        <select v-model="formData.result" class="custom-input">
-          <option v-for="res in results" :key="res" :value="res">{{ res }}</option>
-        </select>
-      </div>
-
-      <div class="my-4 p-3 bg-[#222] rounded-lg border border-gray-700">
-        <div v-if="formData.result === 'вибух'">
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <div class="flex items-center gap-1"><span>А-</span><input v-model="formData.angle" class="custom-input w-full p-1 text-sm"></div>
-            <div class="flex items-center gap-1"><span>Д-</span><input v-model="formData.distance" class="custom-input w-full p-1 text-sm"></div>
-          </div>
-          <select v-model="formData.okiStatus" class="custom-input text-sm w-full">
-            <option value="без пошкоджень">без пошкоджень ОКІ</option>
-            <option value="пошкоджено">пошкоджено ОКІ</option>
-          </select>
-        </div>
-        <div v-else>
-          <div class="grid grid-cols-3 gap-1 mb-2">
-            <div class="flex items-center gap-1"><span>А-</span><input v-model="formData.angle" class="custom-input w-full p-1 text-sm"></div>
-            <div class="flex items-center gap-1"><span>Д-</span><input v-model="formData.distance" class="custom-input w-full p-1 text-sm"></div>
-            <div class="flex items-center gap-1"><span>К-</span><input v-model="formData.krok" class="custom-input w-full p-1 text-sm"></div>
-          </div>
-          <div class="grid grid-cols-3 gap-1">
-            <select v-model="formData.action" class="custom-input p-1 text-[11px]"><option v-for="a in actions" :value="a">{{a}}</option></select>
-            <select v-model="formData.targetCount" class="custom-input p-1 text-xs"><option v-for="n in 9" :value="n">{{n}}</option></select>
-            <select v-model="formData.targetClass" class="custom-input p-1 text-[11px]"><option v-for="c in classes" :value="c">{{c}}</option></select>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-3">
-        <button type="button" @click="copyData" class="w-full bg-green-700 py-4 rounded-xl font-bold uppercase active:bg-green-800 shadow-lg">
-          1. Скопіювати текст
-        </button>
+  <div class="flex-1 flex items-start justify-center content-wrapper">
+    <div class="form-card shadow-2xl my-4">
+      <form @submit.prevent>
         
-        <div class="grid grid-cols-2 gap-2">
-          <a href="sgnl://message" @click="copyDataQuiet('Signal')" class="btn-messenger bg-[#2052ce]">
-            Signal
-          </a>
-          
-          <a :href="whatsappLink" @click="markSent('WhatsApp')" class="btn-messenger bg-[#25D366]">
-            WhatsApp
-          </a>
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Підрозділ:</label>
+          <select v-model="formData.pidrozdil" class="custom-input w-full">
+            <option value="" disabled hidden>Оберіть зі списку</option>
+            <option v-for="unit in units" :key="unit" :value="unit">{{ unit }}</option>
+          </select>
         </div>
 
-        <button type="button" @click="clearForm" class="w-full border border-gray-600 py-2 rounded-xl text-[10px] uppercase opacity-40">
-          Очистити все
-        </button>
-      </div>
-      
-      <div v-if="lastSent" class="text-center text-xs text-yellow-500 mt-2 uppercase">Останній раз: {{ lastSent }}</div>
-      <div class="author-tag">© By Туран</div>
-    </form>
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Позивний:</label>
+          <div class="flex gap-2">
+            <select v-model="formData.pozivniyPrefix" class="w-1/3 custom-input">
+              <option v-for="p in prefixes" :key="p" :value="p">{{ p }}</option>
+            </select>
+            <input v-model="formData.pozivniy" type="text" placeholder="Впишіть" class="w-2/3 custom-input">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-4">
+          <div class="flex flex-col">
+            <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Область:</label>
+            <select v-model="formData.oblast" class="custom-input">
+              <option v-for="reg in regions" :key="reg" :value="reg">{{ reg }}</option>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Н.П.:</label>
+            <input v-model="formData.naseleniyPunkt" type="text" class="custom-input">
+          </div>
+        </div>
+
+        <div class="flex gap-2 mb-4">
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Дата:</label>
+            <input v-model="formData.date" type="date" class="custom-input w-full">
+          </div>
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Час:</label>
+            <div class="flex gap-1">
+              <button type="button" @click="adjustTime(-1)" class="time-btn">-</button>
+              <input v-model="formData.time" type="time" class="custom-input w-full text-center">
+              <button type="button" @click="adjustTime(1)" class="time-btn">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Зброя:</label>
+          <div v-for="(w, index) in formData.weapons" :key="'w'+index" class="flex gap-2 mb-2">
+            <select v-model="w.name" class="custom-input w-full text-sm">
+              <option v-for="weapon in weapons" :key="weapon" :value="weapon">{{ weapon }}</option>
+            </select>
+            <button v-if="formData.weapons.length > 1" @click="removeWeapon(index)" class="bg-red-800 px-3 rounded text-white shrink-0">✖</button>
+          </div>
+          <button type="button" @click="addWeapon" class="text-blue-400 text-xs font-bold uppercase">+ Додати зброю</button>
+        </div>
+
+        <div class="flex gap-2 mb-4 w-full" v-if="formData.result !== 'вибух'">
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70 font-semibold uppercase">№ цілі:</label>
+            <input v-model="formData.targetNumber" type="text" placeholder="0000" class="custom-input w-full">
+          </div>
+          <div class="flex flex-col flex-1">
+            <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Висота:</label>
+            <input v-model="formData.height" type="text" placeholder="0000" class="custom-input w-full">
+          </div>
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="mb-1 text-sm opacity-70 font-semibold uppercase">Результат:</label>
+          <select v-model="formData.result" class="custom-input" @change="onResultChange">
+            <option v-for="res in results" :key="res" :value="res">{{ res }}</option>
+          </select>
+        </div>
+
+        <div class="mb-4" v-if="showRozxid">
+          <label class="mb-1 block text-sm opacity-70 font-semibold uppercase">Розхід БК:</label>
+          <div v-for="(item, index) in formData.rozxid" :key="'r'+index" class="bg-[#2a2a2a] p-3 rounded-lg mb-2 border border-gray-700">
+            <select v-model="item.type" class="custom-input w-full mb-2 text-sm">
+              <option v-for="ammo in ammoTypes" :key="ammo" :value="ammo">{{ ammo }}</option>
+            </select>
+            <div class="flex gap-2">
+              <input v-model="item.quantity" type="text" placeholder="Кількість" class="custom-input w-full">
+              <button type="button" @click="removeRozxid(index)" class="bg-red-800 px-3 rounded text-white text-xs">✖</button>
+            </div>
+          </div>
+          <button type="button" @click="addRozxid" class="text-blue-400 text-xs font-bold uppercase">+ Додати розхід</button>
+        </div>
+
+        <div class="my-4 p-3 bg-[#222] rounded-lg border border-gray-700">
+          <label class="mb-2 block text-sm font-bold text-blue-400 text-center uppercase">Опис:</label>
+          
+          <div v-if="formData.result === 'вибух'">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <div class="flex items-center gap-1"><span>А-</span><input v-model="formData.angle" class="custom-input w-full p-1 text-sm"></div>
+              <div class="flex items-center gap-1"><span>Д-</span><input v-model="formData.distance" class="custom-input w-full p-1 text-sm"></div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <select v-model="formData.explosionCount" class="custom-input text-sm">
+                <option v-for="n in 9" :key="n" :value="n">{{ n }} вибух(и)</option>
+              </select>
+              <select v-model="formData.explosionPlace" class="custom-input text-sm">
+                <option value="в повітрі">в повітрі</option>
+                <option value="на землі">на землі</option>
+              </select>
+              <select v-model="formData.okiStatus" class="custom-input text-sm">
+                <option value="без пошкоджень">без пошкоджень ОКІ</option>
+                <option value="пошкоджено">пошкоджено ОКІ</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-else>
+            <div class="grid grid-cols-3 gap-1 mb-2">
+              <div class="flex items-center gap-1"><span>А-</span><input v-model="formData.angle" class="custom-input w-full p-1 text-sm"></div>
+              <div class="flex items-center gap-1"><span>Д-</span><input v-model="formData.distance" class="custom-input w-full p-1 text-sm"></div>
+              <div class="flex items-center gap-1"><span>К-</span><input v-model="formData.krok" class="custom-input w-full p-1 text-sm"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <select v-model="formData.action" class="custom-input p-1 text-[11px]">
+                <option v-for="act in actions" :key="act" :value="act">{{ act }}</option>
+              </select>
+              <select v-model="formData.targetCount" class="custom-input p-1 text-xs">
+                <option v-for="n in 9" :key="n" :value="n">{{ n }}</option>
+              </select>
+              <select v-model="formData.targetClass" class="custom-input p-1 text-[11px]">
+                <option v-for="cls in classes" :key="cls" :value="cls">{{ cls }}</option>
+              </select>
+            </div>
+            <div v-if="formData.targetClass === 'БПЛА'" class="mt-2">
+              <select v-model="formData.uavType" class="custom-input w-full text-sm">
+                <option v-for="t in uavTypes" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <textarea v-model="formData.comment" rows="2" placeholder="Коментар..." class="custom-input w-full"></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label class="mb-1 block text-sm opacity-70 font-semibold uppercase">Особовий склад:</label>
+          <div v-for="(p, index) in formData.personnel" :key="'p'+index" class="bg-[#2a2a2a] p-3 rounded-lg mb-2 flex flex-col gap-2 border border-gray-700">
+            <select v-model="p.rank" class="custom-input">
+              <option v-for="rank in ranks" :key="rank" :value="rank">{{ rank }}</option>
+            </select>
+            <div class="flex gap-2">
+              <input v-model="p.pib" placeholder="Прізвище І.О." class="custom-input w-full">
+              <button type="button" @click="removePersonnel(index)" class="bg-red-800 px-3 rounded text-white shrink-0">✖</button>
+            </div>
+          </div>
+          <button type="button" @click="addPersonnel" class="text-blue-400 text-xs font-bold uppercase">+ Додати склад</button>
+        </div>
+
+        <div class="space-y-3 mt-6">
+          <button type="button" @click="copyData" class="w-full bg-green-700 py-4 rounded-xl font-bold uppercase active:bg-green-800 shadow-lg">
+            1. Скопіювати текст
+          </button>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <a href="sgnl://message" @click="copyDataQuiet('Signal')" class="btn-messenger bg-[#2052ce]">Signal</a>
+            <a :href="whatsappLink" @click="markSent('WhatsApp')" class="btn-messenger bg-[#25D366]">WhatsApp</a>
+          </div>
+
+          <button type="button" @click="clearForm" class="w-full border border-gray-600 py-2 rounded-xl text-[10px] uppercase opacity-40">
+            Очистити все
+          </button>
+        </div>
+        
+        <div v-if="lastSent" class="text-center text-xs text-yellow-500 mt-2 uppercase">Останній раз: {{ lastSent }}</div>
+        <div class="author-tag">© By Туран</div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -119,23 +261,32 @@
     data: {
       lastSent: localStorage.getItem('lastSent_Turan') || '',
       formData: {
-        pidrozdil: 'ПвК Центр', pozivniyPrefix: 'МВГ', pozivniy: '', naseleniyPunkt: '', oblast: 'Київська',
-        date: '', time: '', result: 'не застосовувалась', angle: '0', distance: '0', krok: '0',
-        action: 'обстріляно', targetCount: '1', targetClass: 'БПЛА', okiStatus: 'без пошкоджень'
+        pidrozdil: '', pozivniyPrefix: 'МВГ', pozivniy: '', naseleniyPunkt: '', oblast: 'Київська',
+        date: '', time: '', weapons: [{ name: 'зі стрілецької зброї 5.45/5.56' }], 
+        targetNumber: '', height: '', result: 'не застосовувалась',
+        angle: '0', distance: '0', krok: '0', action: 'обстріляно', targetCount: '1', targetClass: 'БПЛА', uavType: 'Shahed',
+        explosionCount: '1', explosionPlace: 'в повітрі', explosionStatus: 'від роботи ППО', okiStatus: 'без пошкоджень',
+        rozxid: [{ type: 'Розхід ЗКР', quantity: '' }], personnel: [{ rank: 'солд.', pib: '' }], comment: ''
       },
-      units: ['ПвК Центр', '138 ртбр', '96 зрбр', '14 зрбр', '156 зрп', 'ДПСУ', 'НГУ', 'ГУР'],
+      units: ['ПвК Центр', '138 ртбр', '96 зрбр', '14 зрбр', '156 зрп', '110 ак', '105 ПрикЗ', 'ДПСУ', 'НГУ', 'ГУР'],
       prefixes: ['МВГ', 'ВГ'],
+      regions: ['Вінницька', 'Житомирська', 'Кіровоградська', 'Київська', 'Одеська', 'Полтавська', 'Сумська', 'Черкаська', 'Чернігівська'],
+      weapons: ['зі стрілецької зброї 5.45/5.56', 'зі стрілецької зброї 7.62', 'із ВКК Browning M2 12.7', 'із ЗУ 23-2 23мм', 'із ПЗРК Stinger', 'із ПЗРК Piorun'],
+      ammoTypes: ['Розхід ЗКР', 'Розхід НБЖ', 'Набій 12,7х108 мм', 'Набій 7,62х54 мм', 'Набій 5,45х39 мм'],
       results: ['не застосовувалась', 'не знищено', 'ЗНИЩЕНО', 'вибух'],
       actions: ['обстріляно', 'знищено', 'Акустично', 'Візуально'],
-      classes: ['БПЛА', 'КР', 'Гелікоптер', 'Літак малий']
+      classes: ['БПЛА', 'КР', 'Гелікоптер', 'Літак малий'],
+      uavTypes: ['Shahed', 'Гербера', 'Пародія', 'Орлан', 'Ланцет', 'Невідомий'],
+      ranks: ['солд.', 'ст. солд.', 'с-нт', 'л-т', 'к-н', 'м-р']
     },
     computed: {
+      showRozxid() { return this.formData.result !== 'не застосовувалась' && this.formData.result !== 'вибух'; },
       whatsappLink() {
-        const text = encodeURIComponent(this.generateText());
-        return `https://wa.me/?text=${text}`;
+        return `https://wa.me/?text=${encodeURIComponent(this.generateText())}`;
       }
     },
     methods: {
+      onResultChange() { if(this.formData.result === 'ЗНИЩЕНО') this.formData.action = 'знищено'; },
       updateDateTime() {
         const now = new Date();
         this.formData.date = now.toISOString().split('T')[0];
@@ -146,43 +297,45 @@
         const d = new Date(); d.setHours(h, m + mins);
         this.formData.time = d.toTimeString().slice(0, 5);
       },
+      addWeapon() { this.formData.weapons.push({ name: 'зі стрілецької зброї 5.45/5.56' }); },
+      removeWeapon(i) { this.formData.weapons.splice(i, 1); },
+      addRozxid() { this.formData.rozxid.push({ type: 'Розхід ЗКР', quantity: '' }); },
+      removeRozxid(i) { this.formData.rozxid.splice(i, 1); },
+      addPersonnel() { this.formData.personnel.push({ rank: 'солд.', pib: '' }); },
+      removePersonnel(i) { this.formData.personnel.splice(i, 1); },
       generateText() {
         const f = this.formData;
-        let text = `Дата: ${f.date.split('-').reverse().join('.')}\nЧас: ${f.time}\nРезультат: ${f.result}\nН.П.: ${f.naseleniyPunkt}\nПідрозділ: ${f.pidrozdil}\nПозивний: ${f.pozivniyPrefix} ${f.pozivniy}\n`;
+        const wLine = f.weapons.map(w => w.name).join(', ');
+        const pLine = f.personnel.filter(p => p.pib).map(p => `${p.rank} ${p.pib}`).join(', ');
+        let text = `Дата: ${f.date.split('-').reverse().join('.')}\nЧас: ${f.time}\nРезультат: ${f.result}\nН.П.: ${f.naseleniyPunkt}\nПідрозділ: ${f.pidrozdil}\nПозивний: ${f.pozivniyPrefix} ${f.pozivniy}\nЗброя: ${wLine}\n`;
         if (f.result !== 'вибух') {
-          text += `Опис: А-${f.angle}, Д-${f.distance}, К-${f.krok}, ${f.action} ${f.targetCount} ${f.targetClass}`;
+          text += `Опис: А-${f.angle}, Д-${f.distance}, К-${f.krok}, ${f.action} ${f.targetCount} ${f.targetClass} ${f.targetClass === 'БПЛА' ? f.uavType : ''}`;
         } else {
-          text += `Опис: А-${f.angle}, Д-${f.distance}, Стан ОКІ: ${f.okiStatus}`;
+          text += `Опис: А-${f.angle}, Д-${f.distance} ${f.explosionCount} вибух(и) ${f.explosionPlace}, Стан ОКІ: ${f.okiStatus}`;
         }
+        if(pLine) text += `\nСклад: ${pLine}`;
+        if(f.comment) text += `\nКоментар: ${f.comment}`;
         return text;
       },
-      copyData() {
-        this.doCopy();
-        alert("Текст скопійовано!");
-      },
-      copyDataQuiet(app) {
-        this.doCopy();
-        this.markSent(app);
-      },
+      copyData() { this.doCopy(); alert("Текст скопійовано!"); },
+      copyDataQuiet(app) { this.doCopy(); this.markSent(app); },
       doCopy() {
         const text = this.generateText();
         const el = document.createElement('textarea');
         el.value = text;
-        el.setAttribute('readonly', '');
-        el.style.position = 'absolute';
-        el.style.left = '-9999px';
         document.body.appendChild(el);
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
       },
-      markSent(app) {
-        this.lastSent = app;
-        localStorage.setItem('lastSent_Turan', app);
-      },
+      markSent(app) { this.lastSent = app; localStorage.setItem('lastSent_Turan', app); },
       clearForm() { if(confirm("Очистити все?")) { localStorage.clear(); location.reload(); } }
     },
-    created() { this.updateDateTime(); }
+    created() {
+      const saved = localStorage.getItem('milStore_Turan_Final');
+      if (saved) { this.formData = Object.assign(this.formData, JSON.parse(saved)); }
+      this.updateDateTime();
+    }
   });
 </script>
 </body>
